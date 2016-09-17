@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	// "fmt"
 	"bytes"
 	"flag"
 	"log"
@@ -30,7 +29,6 @@ func processBuffer(data []byte, n int) {
 		}
 	}
 	total += len(indices)
-	// fmt.Printf("%v\n", indices)
 	if len(indices) > 0 {
 		for i := 0; i < len(indices); i++ {
 			start := indices[i]
@@ -43,7 +41,6 @@ func processBuffer(data []byte, n int) {
 			if i == 0 && start != 0 {
 				os.Stdout.Write(data[:start])
 			}
-			//fmt.Printf("[%d, %d] %v\n", start, end, data[start:end])
 			os.Stdout.Write([]byte(*boundary))
 			os.Stdout.Write(data[start:end])
 		}

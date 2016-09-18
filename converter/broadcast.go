@@ -20,6 +20,7 @@ var data = &threadSafeSlice{
 
 type worker struct {
 	source chan []byte
+	first bool
 }
 
 type threadSafeSlice struct {
@@ -63,9 +64,6 @@ func testgen(ch chan []byte) {
 		jpeg.Encode(imgbuffer, m, nil)
 
 		// output
-		if index > 0 {
-			buffer.Write([]byte("\r\n"))
-		}
 		fmt.Fprintf(buffer, "%s\r\n", *boundary)
 		fmt.Fprintf(buffer, "Content-Type: image/jpeg\r\n")
 		fmt.Fprintf(buffer, "Content-Length: %d\r\n", imgbuffer.Len())
@@ -88,16 +86,19 @@ func generator(ch chan []byte) {
 			break
 		}
 		ProcessData(readbuffer, n, func(image []byte) {
-			writebuffer.Write([]byte("\r\n"))
-			writebuffer.Write([]byte("--BOUNDARY\r\n"))
+			// header
+			fmt.Fprintf(writebuffer, "%s\r\n", *boundary)
 			writebuffer.Write([]byte("Content-Type: image/jpeg\r\n"))
 			fmt.Fprintf(writebuffer, "Content-Length: %d\r\n", len(image))
 			writebuffer.Write([]byte("\r\n"))
+			// image
 			writebuffer.Write(image)
+			// make a copy to send over channel
 			cp := make([]byte, writebuffer.Len())
 			copy(cp, writebuffer.Bytes())
-			ch <- cp
 			writebuffer.Reset()
+			// send!
+			ch <- cp
 		})
 	}
 }
@@ -112,9 +113,16 @@ func Broadcast() {
 func StreamTo(w io.Writer) {
 	wk := &worker{
 		source: make(chan []byte),
+		first: true,
 	}
 	data.Push(wk)
 	for {
-		w.Write(<-wk.source)
+		s := <-wk.source
+		if !wk.first {
+			w.Write([]byte("\r\n"))
+		} else {
+			wk.first = false
+		}
+		w.Write(s)
 	}
 }

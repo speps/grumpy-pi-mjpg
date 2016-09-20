@@ -1,0 +1,16 @@
+environment:
+  GOOS: linux
+  GOARCH: arm
+
+deploy:
+- provider: BinTray
+  username: speps
+  api_key:
+    secure: IkcYbqlqyL87MqKBJkcFI9j3aX42CKUmFxPcebrfEHr4EsQqcuHuZik9Zx8zRI6k
+  subject: speps
+  repo: grumpy-pi-mjpg
+  package: latest
+  version: official
+  publish: true
+  override: true
+  artifact: mjpg-server

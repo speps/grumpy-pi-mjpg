@@ -20,6 +20,7 @@ const defaultTemplate = `
 	</head>
 	<body>
 		<h1>Live</h1>
+		<p>{{.Len}} viewers when page loaded</p>
 		<img src="{{.Stream}}"/>
 	</body>
 </html>`
@@ -29,7 +30,11 @@ var port = flag.String("port", ":8081", "HTTP listen port")
 
 func writeStreamOutput(w http.ResponseWriter) {
 	w.Header().Add("Content-Type", "multipart/x-mixed-replace;boundary=--BOUNDARY")
-	converter.StreamTo(w)
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	if c, ok := w.(http.CloseNotifier); ok {
+		converter.StreamTo(w, c.CloseNotify())
+	}
 }
 
 func main() {
@@ -53,6 +58,7 @@ func main() {
 
 	data := struct {
 		Title  string
+		Len int
 		Stream string
 	}{
 		Title:  "MJPG Server",
@@ -60,6 +66,7 @@ func main() {
 	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		data.Len = converter.Len()
 		err = t.Execute(w, data)
 		check(err)
 	})

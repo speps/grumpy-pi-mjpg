@@ -21,11 +21,19 @@ var data = &threadSafeSlice{
 type worker struct {
 	source chan []byte
 	first bool
+	done bool
 }
 
 type threadSafeSlice struct {
 	sync.Mutex
 	workers []*worker
+}
+
+func (s *threadSafeSlice) Len() int {
+	s.Lock()
+	defer s.Unlock()
+
+	return len(s.workers)
 }
 
 func (s *threadSafeSlice) Push(w *worker) {
@@ -35,19 +43,32 @@ func (s *threadSafeSlice) Push(w *worker) {
 	s.workers = append(s.workers, w)
 }
 
-func (s *threadSafeSlice) Iter(routine func(*worker)) {
+func (s *threadSafeSlice) Iter(routine func(*worker) bool) {
 	s.Lock()
 	defer s.Unlock()
 
-	for _, worker := range s.workers {
-		routine(worker)
+	for i := len(s.workers)-1; i >=0; i-- {
+		remove := routine(s.workers[i])
+		if remove {
+			s.workers[i] = nil
+			s.workers = append(s.workers[:i], s.workers[i+1:]...)
+		}
 	}
 }
 
 func broadcaster(ch chan []byte) {
 	for {
 		msg := <-ch
-		data.Iter(func(w *worker) { w.source <- msg })
+		data.Iter(func(w *worker) bool {
+			if w.done {
+				fmt.Fprintf(os.Stderr, "done %p\n", w)
+				close(w.source)
+				return true
+			} else {
+				w.source <- msg
+				return false
+			}
+		})
 	}
 }
 
@@ -83,6 +104,7 @@ func generator(ch chan []byte) {
 	for {
 		n, err := os.Stdin.Read(readbuffer)
 		if err != nil {
+			fmt.Fprintf(os.Stderr, "gen read err %v\n", err)
 			break
 		}
 		ProcessData(readbuffer, n, func(image []byte) {
@@ -110,19 +132,32 @@ func Broadcast() {
 	// go testgen(c)
 }
 
-func StreamTo(w io.Writer) {
+func Len() int {
+	return data.Len()
+}
+
+func StreamTo(w io.Writer, closed <-chan bool) {
 	wk := &worker{
 		source: make(chan []byte),
 		first: true,
 	}
+	fmt.Fprintf(os.Stderr, "created %p\n", wk)
 	data.Push(wk)
+loop:
 	for {
-		s := <-wk.source
-		if !wk.first {
-			w.Write([]byte("\r\n"))
-		} else {
-			wk.first = false
+		select {
+		case s, ok := <-wk.source:
+			if !ok {
+				break loop
+			}
+			if !wk.first {
+				w.Write([]byte("\r\n"))
+			} else {
+				wk.first = false
+			}
+			w.Write(s)
+		case <-closed:
+			wk.done = true
 		}
-		w.Write(s)
 	}
 }

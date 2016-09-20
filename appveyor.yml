@@ -8,6 +8,10 @@ before_test:
   - go version
   - go build mjpg-server.go
 
+artifacts:
+  - path: mjpg-server
+    name: app
+
 deploy:
 - provider: BinTray
   username: speps
@@ -19,4 +23,4 @@ deploy:
   version: official
   publish: true
   override: true
-  artifact: "mjpg-server"
+  artifact: app

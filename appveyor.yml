@@ -19,4 +19,4 @@ deploy:
   version: official
   publish: true
   override: true
-  artifact: mjpg-server
+  artifact: "mjpg-server"

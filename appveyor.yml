@@ -2,6 +2,12 @@ environment:
   GOOS: linux
   GOARCH: arm
 
+build: off
+
+before_test:
+  - go version
+  - go build mjpg-server.go
+
 deploy:
 - provider: BinTray
   username: speps

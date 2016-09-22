@@ -26,7 +26,7 @@ func ProcessData(data []byte, n int, callback ImageCallback) {
 		if bytes.Compare(work, magic) == 0 {
 			buffer.Write(data[start:i])
 			if buffer.Len() > 0 {
-				end := buffer.Len()-len(magic)+1
+				end := buffer.Len() - len(magic) + 1
 				image := buffer.Bytes()[:end]
 				rest := buffer.Bytes()[end:]
 				callback(image)

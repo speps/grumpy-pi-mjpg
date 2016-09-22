@@ -58,7 +58,7 @@ func main() {
 
 	data := struct {
 		Title  string
-		Len int
+		Len    int
 		Stream string
 	}{
 		Title:  "MJPG Server",

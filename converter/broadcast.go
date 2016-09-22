@@ -1,15 +1,15 @@
 package converter
 
 import (
-	"os"
+	"bytes"
 	"flag"
 	"fmt"
-	"io"
-	"sync"
 	"image"
 	"image/color"
 	"image/jpeg"
-	"bytes"
+	"io"
+	"os"
+	"sync"
 )
 
 var boundary = flag.String("boundary", "--BOUNDARY", "boundary marker")
@@ -20,8 +20,8 @@ var data = &threadSafeSlice{
 
 type worker struct {
 	source chan []byte
-	first bool
-	done bool
+	first  bool
+	done   bool
 }
 
 type threadSafeSlice struct {
@@ -47,7 +47,7 @@ func (s *threadSafeSlice) Iter(routine func(*worker) bool) {
 	s.Lock()
 	defer s.Unlock()
 
-	for i := len(s.workers)-1; i >=0; i-- {
+	for i := len(s.workers) - 1; i >= 0; i-- {
 		remove := routine(s.workers[i])
 		if remove {
 			s.workers[i] = nil
@@ -139,7 +139,7 @@ func Len() int {
 func StreamTo(w io.Writer, closed <-chan bool) {
 	wk := &worker{
 		source: make(chan []byte),
-		first: true,
+		first:  true,
 	}
 	fmt.Fprintf(os.Stderr, "created %p\n", wk)
 	data.Push(wk)

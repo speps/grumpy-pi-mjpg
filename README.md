@@ -15,7 +15,7 @@ split and prepare each image to be a proper MJPEG which includes the right HTTP 
 
 Type this in your terminal :
 
-    > wget https://dl.bintray.com/speps/grumpy-pi-mjpg/mjpg-server
+    wget https://dl.bintray.com/speps/grumpy-pi-mjpg/mjpg-server
 
 ### How to use
 
@@ -41,6 +41,6 @@ There are 2 options :
 
 Once this is done, run this :
 
-    > go build grumpy-pi-mjpg/mjpg-server.go
+    go build grumpy-pi-mjpg/mjpg-server.go
 
 This generates the `mjpg-server` executable.
